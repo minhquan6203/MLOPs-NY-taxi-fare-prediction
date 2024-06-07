@@ -205,6 +205,11 @@ stages:
               scriptLocation: 'inlineScript'
               inlineScript: 'az extension add -n azure-cli-ml'
             displayName: 'Add Azure CLI ML extension'
+
+          - script: |
+              pwd
+              ls ./
+            displayName: 'Show current directory and list files'
             
           - task: AzureCLI@2
             inputs:
@@ -212,7 +217,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                az ml model deploy -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n nytaxifareamount-aci --model $(model.name):1 --compute-target $(amlcompute.clusterName) --overwrite --dc ../landing/deployment/aciDeploymentConfigStaging.yml --ic ../landing/deployment/inferenceConfig.yml
+                az ml model deploy -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n nytaxifareamount-aci --model $(model.name):1 --compute-target $(amlcompute.clusterName) --overwrite --dc ../landing/deployment/aciDeploymentConfigStaging.yml --ic ../landing/deployment/inferenceConfig.yml --verbose
             displayName: 'Deploy model to ACI'
 
           - task: AzureCLI@2
