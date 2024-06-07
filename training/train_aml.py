@@ -120,6 +120,7 @@ def main():
 
     # Split the data into test/train
     df = dataset.to_pandas_dataframe()
+    df = df.dropna()
 
     print(f"Dataset contains {len(df)} rows.")
     data = split_data(df)
