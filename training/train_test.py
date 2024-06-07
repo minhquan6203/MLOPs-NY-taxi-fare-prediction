@@ -13,6 +13,7 @@ def test_split_data():
     test_data = {
         'key': [0, 1, 2, 3, 4],
         'fare_amount': [1, 2, 3, 5, 5],
+        'pickup_datetime':[0, 0, 1, 1, 1],
         'col1': [1, 2, 3, 4, 5],
         'col2': [2, 1, 1, 2, 1]
     }
@@ -69,8 +70,8 @@ def test_get_model_metrics():
 def __get_test_datasets():
     """This is a helper function to set up some test data"""
     X_train = np.array([[1], [2], [3], [4], [5], [6]])
-    y_train = np.array([1, 1, 0, 1, 0, 1])
+    y_train = np.array([1, 2, 3, 4, 5, 6])
     X_valid = np.array([[7], [8]])
-    y_valid = np.array([0, 1])
+    y_valid = np.array([7, 8])
 
     return (X_train, X_valid, y_train, y_valid)
