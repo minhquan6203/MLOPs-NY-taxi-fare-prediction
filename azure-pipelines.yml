@@ -10,7 +10,7 @@ variables:
   amlcompute.idleSecondsBeforeScaledown: 120
   amlcompute.maxNodes: 2
   amlcompute.minNodes: 0
-  amlcompute.vmSize: 'Standard_F4s_v2'
+  amlcompute.vmSize: 'Standard_E4ds_v4'
   azureml.location: 'centralus'
   azureml.resourceGroup: 'mlops-RG'
   azureml.workspaceName: 'mlops-AML-WS'

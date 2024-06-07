@@ -1,4 +1,4 @@
-name: amlproj06_training_env
+name: NYtaxifareamount_training_env
 dependencies:
   - python=3.9.*
   - pip=23.0.1
