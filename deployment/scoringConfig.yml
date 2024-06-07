@@ -14,7 +14,7 @@
 # This directive is stored in a comment to preserve the Conda file structure.
 # [AzureMlVersion] = 2
 
-name: NYtaxifareamount_inference_env
+name: nytaxifareamount_inference_env
 dependencies:
   - python=3.9.*
   - pip=23.0.1
