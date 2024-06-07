@@ -122,13 +122,7 @@ def main():
     # Split the data into test/train
     df = dataset.to_pandas_dataframe()
 
-    # Sample the dataset to 20,000 rows
-    if len(df) > 20000:
-        df = df.sample(n=20000, random_state=0)
-        print(f"Dataset contains {len(df)} rows. With sampling applied.")
-    else:
-        print(f"Dataset contains {len(df)} rows. No sampling applied.")
-
+    print(f"Dataset contains {len(df)} rows.")
     data = split_data(df)
 
     # Train the model
