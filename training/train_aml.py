@@ -8,20 +8,41 @@ import json
 from train import split_data, train_model, get_model_metrics
 
 
+# def register_dataset(
+#     aml_workspace: Workspace,
+#     dataset_name: str,
+#     datastore_name: str,
+#     file_path: str
+# ) -> Dataset:
+#     datastore = Datastore.get(aml_workspace, datastore_name)
+#     dataset = Dataset.Tabular.from_delimited_files(path=(datastore, file_path))
+#     dataset = dataset.register(workspace=aml_workspace,
+#                                name=dataset_name,
+#                                create_new_version=True)
+
+#     return dataset
+
 def register_dataset(
     aml_workspace: Workspace,
     dataset_name: str,
     datastore_name: str,
-    file_path: str
+    file_path: str,
+    sampling_ratio: float = 0.1
 ) -> Dataset:
     datastore = Datastore.get(aml_workspace, datastore_name)
     dataset = Dataset.Tabular.from_delimited_files(path=(datastore, file_path))
-    dataset = dataset.register(workspace=aml_workspace,
-                               name=dataset_name,
-                               create_new_version=True)
-
-    return dataset
-
+    
+    # Sample the dataset
+    sampled_dataset = dataset.sample_spark(fraction=sampling_ratio)
+    
+    # Register the sampled dataset in the AML workspace
+    sampled_dataset = sampled_dataset.register(
+        workspace=aml_workspace,
+        name=dataset_name,
+        create_new_version=True
+    )
+    
+    return sampled_dataset
 
 def main():
     print("Running train_aml.py")
