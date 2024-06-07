@@ -37,7 +37,7 @@ def register_dataset(
     sample_size = int(total_rows * sampling_ratio)
     
     # Take a random sample of the dataset
-    sampled_dataset = dataset.take(sample_size, seed=42)
+    sampled_dataset = dataset.take(sample_size)
     
     # Register the sampled dataset in the AML workspace
     sampled_dataset = sampled_dataset.register(
