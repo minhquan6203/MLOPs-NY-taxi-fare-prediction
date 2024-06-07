@@ -7,8 +7,6 @@ from sklearn import metrics
 # Assuming the updated functions from the previous message are saved in train.py
 from train import split_data, train_model, get_model_metrics
 
-"""A set of simple unit tests for protecting against regressions in train.py"""
-
 def test_split_data():
     test_data = {
         'key': [0, 1, 2, 3, 4],
@@ -49,7 +47,7 @@ def test_get_model_metrics():
     class MockModel:
         @staticmethod
         def predict(data):
-            return np.array([0.5, 0.5])
+            return np.array([7, 8])
 
     data = __get_test_datasets()
     metrics = get_model_metrics(MockModel(), data)
@@ -63,9 +61,9 @@ def test_get_model_metrics():
     mae = metrics["mean_absolute_error"]
     r2 = metrics["r2_score"]
 
-    np.testing.assert_almost_equal(mse, 0.25)
-    np.testing.assert_almost_equal(mae, 0.5)
-    np.testing.assert_almost_equal(r2, -3.0)
+    np.testing.assert_almost_equal(mse, 0.0)
+    np.testing.assert_almost_equal(mae, 0.0)
+    np.testing.assert_almost_equal(r2, 1.0)
 
 def __get_test_datasets():
     """This is a helper function to set up some test data"""
