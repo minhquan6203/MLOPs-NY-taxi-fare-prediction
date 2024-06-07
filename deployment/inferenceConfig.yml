@@ -1,0 +1,9 @@
+entryScript: ../landing/deployment/score.py
+runtime: python
+condaFile: ../landing/deployment/scoringConfig.yml
+extraDockerfileSteps:
+schemaFile:
+sourceDirectory:
+enableGpu: False
+baseImage:
+baseImageRegistry:

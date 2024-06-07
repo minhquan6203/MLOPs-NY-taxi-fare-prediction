@@ -1,0 +1,281 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  amlcompute.clusterName: 'amlcluster'
+  basename: mlops
+  amlcompute.idleSecondsBeforeScaledown: 120
+  amlcompute.maxNodes: 2
+  amlcompute.minNodes: 0
+  amlcompute.vmSize: 'Standard_F4s_v2'
+  azureml.location: 'centralus'
+  azureml.resourceGroup: 'mlops-RG'
+  azureml.workspaceName: 'mlops-AML-WS'
+  azureml.serviceconnection: 'azure-resource-connection'
+  experiment.name: 'NYtaxifareamount_regression'
+  model.name: 'NYtaxifareamount_model'
+  aks.agentCount: 3
+  aks.clusterName: 'amlk8scluter'
+  aks.vmSize: 'Standard_A2_v2'
+
+stages:
+# Build Stage
+- stage: CI
+  jobs:
+  - job: Build
+    steps:
+    - script: echo Hello, world!
+      displayName: 'Run a one-line script'
+
+    - script: |
+        echo Add other tasks to build, test, and deploy your project.
+        echo See https://aka.ms/yaml
+      displayName: 'Run a multi-line script'
+
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.9'
+        addToPath: true
+        architecture: 'x64'
+      displayName: 'Choose python version'
+
+    - script: |
+        pwd
+        ls ./
+      displayName: 'Show current directory and list files'
+
+    - task: Bash@3
+      inputs:
+        filePath: 'package_requirement/install_requirements.sh'
+        workingDirectory: 'package_requirement'
+      displayName: 'Install packages'
+        
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureml.serviceconnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Kiểm tra sự tồn tại của nhóm tài nguyên
+          RESOURCE_GROUP_EXISTS=$(az group exists --name $(azureml.resourceGroup))
+
+          echo "##vso[task.setvariable variable=resourceGroupExists]$RESOURCE_GROUP_EXISTS"
+      displayName: 'Check if resource group exists'
+
+    - ${{ if ne(variables['resourceGroupExists'], 'true') }}:
+      - task: AzureResourceGroupDeployment@2
+        inputs:
+          azureSubscription: $(azureml.serviceconnection)
+          action: 'Create Or Update Resource Group'
+          resourceGroupName: $(azureml.resourceGroup)
+          location: $(azureml.location)
+          templateLocation: 'Linked artifact'
+          csmFile: 'environment_setup/cloud-environment.json'
+          overrideParameters: '-baseName $(basename) -location $(azureml.location) -workspace $(azureml.workspaceName)'
+          deploymentMode: 'Incremental'
+        displayName: 'Deploy resources to Azure'
+
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: 'pytest training/train_test.py --doctest-modules --junitxml=junit/test-results.xml --cov=data_test --cov-report=xml --cov-report=html'
+      displayName: 'Run tests'
+
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/test-*.xml'
+      displayName: 'Publish test results'
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureml.serviceconnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: 'az extension add -n azure-cli-ml'
+      displayName: 'Add Azure CLI ML extension'
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureml.serviceconnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az ml workspace create -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -l $(azureml.location) --exist-ok --yes
+      displayName: 'Create Azure ML workspace'
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureml.serviceconnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az ml computetarget create amlcompute -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n $(amlcompute.clusterName) -s $(amlcompute.vmSize) --min-nodes $(amlcompute.minNodes) --max-nodes $(amlcompute.maxNodes) --idle-seconds-before-scaledown $(amlcompute.idleSecondsBeforeScaledown)
+      displayName: 'Create compute cluster'
+
+    - script: |
+        gdown --id 1TfcGMB2WVayk-6oX3uK2gt4J_dY6bjGz -O data/NYtaxifareamount.csv
+      displayName: 'Download data from Google Drive'
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureml.serviceconnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az ml datastore upload -w $(azureml.workspaceName) -g $(azureml.resourceGroup) -n $(az ml datastore show-default -w $(azureml.workspaceName) -g $(azureml.resourceGroup) --query name -o tsv) -p data -u NYtaxifareamount --overwrite true
+      displayName: 'Upload data to Azure ML Datastore'
+
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: 'mkdir metadata && mkdir models'
+      displayName: 'Create metadata and models folders'
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureml.serviceconnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az ml run submit-script -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -e $(experiment.name) --ct $(amlcompute.clusterName) -d training/conda_dependencies.yml -t metadata/run.json training/train_aml.py
+      displayName: 'Train model'
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureml.serviceconnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az ml model register -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n $(model.name) -f metadata/run.json --asset-path outputs/models/NYtaxifareamount_model.pkl -d "Classification model for filing a claim prediction" --tag "data"="NYtaxifareamount" --tag "model"="classification" --model-framework ScikitLearn -t metadata/model.json
+      displayName: 'Register model'
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureml.serviceconnection)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az ml model download -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -i $(jq -r .modelId metadata/model.json) -t ./models --overwrite
+      displayName: 'Download model'
+
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)'
+        Contents: |
+          **/metadata/*
+          **/models/*
+          **/deployment/*
+          **/tests/integration/*
+          **/package_requirement/*
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      displayName: 'Copy files and folders'
+
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)'
+        artifact: 'landing'
+        publishLocation: 'pipeline'
+      displayName: 'Publish Artifact'
+
+# Deployment Stage
+- stage: ACIStaging
+  jobs:
+  - deployment: AciDeployment
+    environment: 'aci-prod' # Define your environment name
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.9'
+              addToPath: true
+              architecture: 'x64'
+            displayName: 'Choose python version'
+
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureml.serviceconnection)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: 'az extension add -n azure-cli-ml'
+            displayName: 'Add Azure CLI ML extension'
+            
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureml.serviceconnection)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az ml model deploy -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n NYtaxifareamount-aci --model $(model.name):1 --compute-target $(amlcompute.clusterName) --overwrite --dc ../landing/deployment/aciDeploymentConfigStaging.yml --ic ../landing/deployment/inferenceConfig.yml
+            displayName: 'Deploy model to ACI'
+
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureml.serviceconnection)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az ml endpoint realtime show -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n NYtaxifareamount-aci
+            displayName: 'Show ACI endpoint'
+
+# Kubernetes Deployment Stage
+- stage: Production
+  jobs:
+  - deployment: K8sDeploy
+    environment: 'k8s-prod' # Define your Kubernetes environment
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.9'
+              addToPath: true
+              architecture: 'x64'
+            displayName: 'Choose python version'
+
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureml.serviceconnection)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: 'az extension add -n azure-cli-ml'
+            displayName: 'Add Azure CLI ML extension'
+          
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureml.serviceconnection)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az ml computetarget create aks -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n $(aks.clusterName) -s $(aks.vmSize) -a $(aks.agentCount)
+            displayName: 'Create AKS cluster'
+
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureml.serviceconnection)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az ml model deploy -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n NYtaxifareamount-k8s --model $(model.name):1 --compute-target $(aks.clusterName) --overwrite --dc ../landing/deployment/aksDeploymentConfigProd.yml --ic ../landing/deployment/inferenceConfig.yml
+            displayName: 'Deploy model to Kubernetes'
+          
+          - task: Bash@3
+            inputs:
+              filePath: '../landing/package_requirement/install_requirements.sh'
+              workingDirectory: 'package_requirement'
+            displayName: 'Install packages'
+
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureml.serviceconnection)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az ml endpoint realtime show -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n NYtaxifareamount-k8s
+            displayName: 'Show Kubernetes endpoint'

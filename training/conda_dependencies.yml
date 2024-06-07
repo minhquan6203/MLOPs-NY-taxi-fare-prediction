@@ -1,0 +1,14 @@
+name: amlproj06_training_env
+dependencies:
+  - python=3.9.*
+  - pip=23.0.1
+  - pip:
+      - azureml-sdk
+      - azureml-defaults
+      - scikit-learn
+      - inference-schema[numpy-support]
+      - azure-storage-blob
+      - lightgbm
+      - LightGBM
+      - joblib
+      - pandas
