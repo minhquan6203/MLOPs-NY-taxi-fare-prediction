@@ -8,32 +8,36 @@ import json
 from train import split_data, train_model, get_model_metrics
 
 
-# def register_dataset(
-#     aml_workspace: Workspace,
-#     dataset_name: str,
-#     datastore_name: str,
-#     file_path: str
-# ) -> Dataset:
-#     datastore = Datastore.get(aml_workspace, datastore_name)
-#     dataset = Dataset.Tabular.from_delimited_files(path=(datastore, file_path))
-#     dataset = dataset.register(workspace=aml_workspace,
-#                                name=dataset_name,
-#                                create_new_version=True)
+def register_dataset(
+    aml_workspace: Workspace,
+    dataset_name: str,
+    datastore_name: str,
+    file_path: str
+) -> Dataset:
+    datastore = Datastore.get(aml_workspace, datastore_name)
+    dataset = Dataset.Tabular.from_delimited_files(path=(datastore, file_path))
+    dataset = dataset.register(workspace=aml_workspace,
+                               name=dataset_name,
+                               create_new_version=True)
 
-#     return dataset
+    return dataset
 
 def register_dataset(
     aml_workspace: Workspace,
     dataset_name: str,
     datastore_name: str,
     file_path: str,
-    sampling_ratio: float = 0.1
+    sampling_ratio: float = 0.001
 ) -> Dataset:
     datastore = Datastore.get(aml_workspace, datastore_name)
     dataset = Dataset.Tabular.from_delimited_files(path=(datastore, file_path))
     
-    # Sample the dataset
-    sampled_dataset = dataset.sample_spark(fraction=sampling_ratio)
+    # Estimate the number of rows to sample
+    total_rows = dataset.to_pandas_dataframe().shape[0]
+    sample_size = int(total_rows * sampling_ratio)
+    
+    # Take a random sample of the dataset
+    sampled_dataset = dataset.take(sample_size, seed=42)
     
     # Register the sampled dataset in the AML workspace
     sampled_dataset = sampled_dataset.register(
