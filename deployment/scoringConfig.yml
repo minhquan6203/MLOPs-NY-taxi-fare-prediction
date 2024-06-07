@@ -10,4 +10,5 @@ dependencies:
       - azure-storage-blob
       - joblib
       - pandas
-      - json
+      - lightgbm
+      - LightGBM

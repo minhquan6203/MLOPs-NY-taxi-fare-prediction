@@ -7,45 +7,45 @@ import json
 from train import split_data, train_model, get_model_metrics
 
 
-# def register_dataset(
-#     aml_workspace: Workspace,
-#     dataset_name: str,
-#     datastore_name: str,
-#     file_path: str
-# ) -> Dataset:
-#     datastore = Datastore.get(aml_workspace, datastore_name)
-#     dataset = Dataset.Tabular.from_delimited_files(path=(datastore, file_path))
-#     dataset = dataset.register(workspace=aml_workspace,
-#                                name=dataset_name,
-#                                create_new_version=True)
-
-#     return dataset
-
 def register_dataset(
     aml_workspace: Workspace,
     dataset_name: str,
     datastore_name: str,
-    file_path: str,
-    sampling_ratio: float = 0.1
+    file_path: str
 ) -> Dataset:
     datastore = Datastore.get(aml_workspace, datastore_name)
     dataset = Dataset.Tabular.from_delimited_files(path=(datastore, file_path))
+    dataset = dataset.register(workspace=aml_workspace,
+                               name=dataset_name,
+                               create_new_version=True)
+
+    return dataset
+
+# def register_dataset(
+#     aml_workspace: Workspace,
+#     dataset_name: str,
+#     datastore_name: str,
+#     file_path: str,
+#     sampling_ratio: float = 0.1
+# ) -> Dataset:
+#     datastore = Datastore.get(aml_workspace, datastore_name)
+#     dataset = Dataset.Tabular.from_delimited_files(path=(datastore, file_path))
     
-    # Estimate the number of rows to sample
-    total_rows = dataset.to_pandas_dataframe().shape[0]
-    sample_size = int(total_rows * sampling_ratio)
+#     # Estimate the number of rows to sample
+#     total_rows = dataset.to_pandas_dataframe().shape[0]
+#     sample_size = int(total_rows * sampling_ratio)
     
-    # Take a random sample of the dataset
-    sampled_dataset = dataset.take(sample_size)
+#     # Take a random sample of the dataset
+#     sampled_dataset = dataset.take(sample_size)
     
-    # Register the sampled dataset in the AML workspace
-    sampled_dataset = sampled_dataset.register(
-        workspace=aml_workspace,
-        name=dataset_name,
-        create_new_version=True
-    )
+#     # Register the sampled dataset in the AML workspace
+#     sampled_dataset = sampled_dataset.register(
+#         workspace=aml_workspace,
+#         name=dataset_name,
+#         create_new_version=True
+#     )
     
-    return sampled_dataset
+#     return sampled_dataset
 
 def main():
     print("Running train_aml.py")
