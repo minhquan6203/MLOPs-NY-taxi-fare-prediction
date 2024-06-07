@@ -115,19 +115,19 @@ stages:
           az ml computetarget create amlcompute -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n $(amlcompute.clusterName) -s $(amlcompute.vmSize) --min-nodes $(amlcompute.minNodes) --max-nodes $(amlcompute.maxNodes) --idle-seconds-before-scaledown $(amlcompute.idleSecondsBeforeScaledown)
       displayName: 'Create compute cluster'
 
-    - script: |
-        mkdir -p data
-        gdown --id 1TfcGMB2WVayk-6oX3uK2gt4J_dY6bjGz -O data/nytaxifareamount.csv
-      displayName: 'Download data from Google Drive'
+    # - script: |
+    #     mkdir -p data
+    #     gdown --id 1TfcGMB2WVayk-6oX3uK2gt4J_dY6bjGz -O data/nytaxifareamount.csv
+    #   displayName: 'Download data from Google Drive'
 
-    - task: AzureCLI@2
-      inputs:
-        azureSubscription: $(azureml.serviceconnection)
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az ml datastore upload -w $(azureml.workspaceName) -g $(azureml.resourceGroup) -n $(az ml datastore show-default -w $(azureml.workspaceName) -g $(azureml.resourceGroup) --query name -o tsv) -p data -u nytaxifareamount --overwrite true
-      displayName: 'Upload data to Azure ML Datastore'
+    # - task: AzureCLI@2
+    #   inputs:
+    #     azureSubscription: $(azureml.serviceconnection)
+    #     scriptType: 'bash'
+    #     scriptLocation: 'inlineScript'
+    #     inlineScript: |
+    #       az ml datastore upload -w $(azureml.workspaceName) -g $(azureml.resourceGroup) -n $(az ml datastore show-default -w $(azureml.workspaceName) -g $(azureml.resourceGroup) --query name -o tsv) -p data -u nytaxifareamount --overwrite true
+    #   displayName: 'Upload data to Azure ML Datastore'
 
     - task: Bash@3
       inputs:
