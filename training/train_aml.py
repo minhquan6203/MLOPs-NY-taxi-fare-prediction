@@ -3,7 +3,6 @@ from azureml.core import Dataset, Datastore, Workspace
 import os
 import argparse
 import joblib
-import pickle
 import json
 from train import split_data, train_model, get_model_metrics
 
@@ -27,7 +26,7 @@ def register_dataset(
     dataset_name: str,
     datastore_name: str,
     file_path: str,
-    sampling_ratio: float = 0.001
+    sampling_ratio: float = 0.01
 ) -> Dataset:
     datastore = Datastore.get(aml_workspace, datastore_name)
     dataset = Dataset.Tabular.from_delimited_files(path=(datastore, file_path))
