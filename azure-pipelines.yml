@@ -117,6 +117,7 @@ stages:
       displayName: 'Create compute cluster'
 
     - script: |
+        mkdir -p data
         gdown --id 1TfcGMB2WVayk-6oX3uK2gt4J_dY6bjGz -O data/NYtaxifareamount.csv
       displayName: 'Download data from Google Drive'
 
