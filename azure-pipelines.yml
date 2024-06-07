@@ -15,8 +15,8 @@ variables:
   azureml.resourceGroup: 'mlops-RG'
   azureml.workspaceName: 'mlops-AML-WS'
   azureml.serviceconnection: 'azure-resource-connection'
-  experiment.name: 'NYtaxifareamount_regression'
-  model.name: 'NYtaxifareamount_model'
+  experiment.name: 'nytaxifareamount_regression'
+  model.name: 'nytaxifareamount_model'
   aks.agentCount: 3
   aks.clusterName: 'amlk8scluter'
   aks.vmSize: 'Standard_A2_v2'
@@ -151,7 +151,7 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          az ml model register -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n $(model.name) -f metadata/run.json --asset-path outputs/models/NYtaxifareamount.pkl -d "Regression model for filing a taxi fare prediction" --tag "data"="NYtaxifareamount" --tag "model"="regression" --model-framework ScikitLearn -t metadata/model.json
+          az ml model register -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n $(model.name) -f metadata/run.json --asset-path outputs/models/nytaxifareamount.pkl -d "Regression model for filing a taxi fare prediction" --tag "data"="nytaxifareamount" --tag "model"="regression" --model-framework ScikitLearn -t metadata/model.json
       displayName: 'Register model'
 
     - task: AzureCLI@2
@@ -212,7 +212,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                az ml model deploy -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n NYtaxifareamount-aci --model $(model.name):1 --compute-target $(amlcompute.clusterName) --overwrite --dc ../landing/deployment/aciDeploymentConfigStaging.yml --ic ../landing/deployment/inferenceConfig.yml
+                az ml model deploy -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n nytaxifareamount-aci --model $(model.name):1 --compute-target $(amlcompute.clusterName) --overwrite --dc ../landing/deployment/aciDeploymentConfigStaging.yml --ic ../landing/deployment/inferenceConfig.yml
             displayName: 'Deploy model to ACI'
 
           - task: AzureCLI@2
@@ -221,7 +221,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                az ml endpoint realtime show -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n NYtaxifareamount-aci
+                az ml endpoint realtime show -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n nytaxifareamount-aci
             displayName: 'Show ACI endpoint'
 
 # Kubernetes Deployment Stage
@@ -263,7 +263,7 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                az ml model deploy -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n NYtaxifareamount-k8s --model $(model.name):1 --compute-target $(aks.clusterName) --overwrite --dc ../landing/deployment/aksDeploymentConfigProd.yml --ic ../landing/deployment/inferenceConfig.yml
+                az ml model deploy -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n nytaxifareamount-k8s --model $(model.name):1 --compute-target $(aks.clusterName) --overwrite --dc ../landing/deployment/aksDeploymentConfigProd.yml --ic ../landing/deployment/inferenceConfig.yml
             displayName: 'Deploy model to Kubernetes'
           
           - task: Bash@3
@@ -278,5 +278,5 @@ stages:
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                az ml endpoint realtime show -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n NYtaxifareamount-k8s
+                az ml endpoint realtime show -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n nytaxifareamount-k8s
             displayName: 'Show Kubernetes endpoint'

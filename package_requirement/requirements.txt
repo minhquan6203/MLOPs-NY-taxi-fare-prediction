@@ -5,5 +5,4 @@ pandas
 pytest
 pytest-cov
 inference-schema[numpy-support]
-lightgbm
 gdown

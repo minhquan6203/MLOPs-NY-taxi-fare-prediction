@@ -56,21 +56,21 @@ def main():
         "--model_name",
         type=str,
         help="Name of the Model",
-        default="NYtaxifareamount.pkl",
+        default="nytaxifareamount.pkl",
     )
 
     parser.add_argument(
         "--data_file_path",
         type=str,
         help=("data file path, if specified,a new version of the dataset will be registered"),
-        default="NYtaxifareamount",
+        default="nytaxifareamount",
     )
 
     parser.add_argument(
         "--dataset_name",
         type=str,
         help="Dataset name",
-        default="NYtaxifareamount_dataset",
+        default="nytaxifareamount_dataset",
     )
 
     args = parser.parse_args()
@@ -125,8 +125,9 @@ def main():
     # Sample the dataset to 20,000 rows
     if len(df) > 20000:
         df = df.sample(n=20000, random_state=0)
+        print(f"Dataset contains {len(df)} rows. With sampling applied.")
     else:
-        print(f"Dataset contains only {len(df)} rows. No sampling applied.")
+        print(f"Dataset contains {len(df)} rows. No sampling applied.")
 
     data = split_data(df)
 

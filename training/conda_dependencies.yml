@@ -8,7 +8,5 @@ dependencies:
       - scikit-learn
       - inference-schema[numpy-support]
       - azure-storage-blob
-      - lightgbm
-      - LightGBM
       - joblib
       - pandas
