@@ -132,7 +132,7 @@ def main():
 
     # Train the model
     print("Training model with data and parameters:")
-    print("Data:", data)
+    print("Data:", dataset_name)
     print("Parameters:", train_args)
 
     try:

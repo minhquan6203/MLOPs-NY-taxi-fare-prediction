@@ -151,7 +151,7 @@ stages:
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          az ml model register -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n $(model.name) -f metadata/run.json --asset-path outputs/models/NYtaxifareamount_model.pkl -d "Classification model for filing a claim prediction" --tag "data"="NYtaxifareamount" --tag "model"="classification" --model-framework ScikitLearn -t metadata/model.json
+          az ml model register -g $(azureml.resourceGroup) -w $(azureml.workspaceName) -n $(model.name) -f metadata/run.json --asset-path outputs/models/NYtaxifareamount.pkl -d "Regression model for filing a taxi fare prediction" --tag "data"="NYtaxifareamount" --tag "model"="regression" --model-framework ScikitLearn -t metadata/model.json
       displayName: 'Register model'
 
     - task: AzureCLI@2
